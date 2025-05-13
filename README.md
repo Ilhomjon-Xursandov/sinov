@@ -1,0 +1,2 @@
+# sinov
+shunchaki sinov uchun
