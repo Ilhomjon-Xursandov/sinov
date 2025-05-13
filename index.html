@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Sfera Vizualizatsiyasi</title>
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            font-family: Arial, sans-serif;
+        }
+        #container { 
+            position: relative; 
+            width: 100%; 
+            height: 100vh; 
+        }
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+        #coordinates {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        input {
+            margin: 5px 0;
+            width: 100%;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="controls">
+            <h2>Sfera Parametrlari</h2>
+            <label for="radius">Radius: <span id="radiusValue">5</span></label>
+            <input type="range" id="radius" min="1" max="10" step="0.1" value="5">
+            
+            <label for="color">Rang: #<span id="colorValue">ff0000</span></label>
+            <input type="color" id="color" value="#ff0000">
+        </div>
+        
+        <div id="coordinates">
+            <p>X: <span id="xCoord">0</span></p>
+            <p>Y: <span id="yCoord">0</span></p>
+            <p>Z: <span id="zCoord">0</span></p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <script>
+        // Sahna, kamera va renderer sozlamalari
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('container').appendChild(renderer.domElement);
+
+        // Yoritish
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(1, 1, 1);
+        scene.add(directionalLight);
+
+        // Sfera yaratish
+        let sphereGeometry, sphereMaterial, sphere;
+        createSphere(5, 0xff0000);
+
+        // Kamera pozitsiyasi
+        camera.position.z = 15;
+
+        // OrbitControls (aylantirish uchun)
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // UI elementlari
+        const radiusSlider = document.getElementById('radius');
+        const radiusValue = document.getElementById('radiusValue');
+        const colorPicker = document.getElementById('color');
+        const colorValue = document.getElementById('colorValue');
+        
+        const xCoord = document.getElementById('xCoord');
+        const yCoord = document.getElementById('yCoord');
+        const zCoord = document.getElementById('zCoord');
+
+        // Hodisalar
+        radiusSlider.addEventListener('input', function() {
+            const radius = parseFloat(this.value);
+            radiusValue.textContent = radius.toFixed(1);
+            updateSphere(radius, sphereMaterial.color.getHex());
+        });
+
+        colorPicker.addEventListener('input', function() {
+            const color = this.value;
+            colorValue.textContent = color.substring(1);
+            updateSphere(parseFloat(radiusSlider.value), parseInt(color.substring(1), 16));
+        });
+
+        // O'lcham o'zgarishi
+        window.addEventListener('resize', function() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Sfera yaratish funksiyasi
+        function createSphere(radius, color) {
+            sphereGeometry = new THREE.SphereGeometry(radius, 32, 32);
+            sphereMaterial = new THREE.MeshPhongMaterial({ 
+                color: color,
+                shininess: 100,
+                specular: 0x111111
+            });
+            sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            scene.add(sphere);
+        }
+
+        // Sferani yangilash funksiyasi
+        function updateSphere(radius, color) {
+            scene.remove(sphere);
+            createSphere(radius, color);
+        }
+
+        // Animatsiya
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            
+            // Koordinatalarni yangilash
+            if (sphere) {
+                xCoord.textContent = sphere.rotation.x.toFixed(2);
+                yCoord.textContent = sphere.rotation.y.toFixed(2);
+                zCoord.textContent = sphere.rotation.z.toFixed(2);
+            }
+            
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
